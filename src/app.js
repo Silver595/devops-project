@@ -20,6 +20,13 @@ app.get('/', (req, res) => {
   res.status(200).send('server is running. Hello from silver595');
 });
 
+app.get('/health', (req, res) => {
+  res.status(200).json({status:'OK',timestamp:new Date().toISOString(),uptime:process.uptime()});
+});
+
+app.get('/api',(req,res)=>{
+  res.status(200).json({message:'Welcome to silver API!'});
+});
 
 app.use('/api/auth',authRoutes);
 
