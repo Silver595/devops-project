@@ -1,5 +1,5 @@
 import logger from '#config/logger.js';
-import { registerSchema } from '#validations/auth.validation.js';
+import { loginSchema, registerSchema } from '#validations/auth.validation.js';
 import { formatValidationError } from '#utils/format.js';
 
 export const register = async (req, res, next) => {
@@ -34,6 +34,25 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
+    const validationResult = loginSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(401).json({
+        error: 'validation error',
+        details: formatValidationError(validationResult.error),
+      });
+    }
+
+    const { email, password } = validationResult.data;
+    logger.info(`User logged in successfully: ${email}`);
+    res.json({
+      message: 'User logged in successfully',
+      user: {
+        id: 1,
+        email,
+        password,
+      },
+    });
   } catch (error) {
     logger.error('login error', error);
     if (error.message === 'Invalid email or password') {
@@ -41,5 +60,6 @@ export const login = async (req, res, next) => {
         error: 'Invalid email or password',
       });
     }
+    next(error);
   }
 };
