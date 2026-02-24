@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import authRoutes from '#routes/auth.routes.js';
+import securityMiddleware from '#middleware/security.js';
 const app = express();
 
 logger.info('Hello from silver API!');
@@ -19,7 +20,7 @@ app.use(
     stream: { write: message => logger.info(message.trim()) },
   })
 );
-
+app.use(securityMiddleware);
 app.get('/', (req, res) => {
   res.status(200).send('server is running. Hello from silver595');
 });

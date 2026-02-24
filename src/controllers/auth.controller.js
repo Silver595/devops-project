@@ -2,7 +2,7 @@ import logger from '#config/logger.js';
 import { loginSchema, registerSchema } from '#validations/auth.validation.js';
 import { formatValidationError } from '#utils/format.js';
 import { createUser, authenticateUser } from '#services/auth.service.js';
-import {jwtToken} from '#utils/jwt.js';
+import { jwtToken } from '#utils/jwt.js';
 import { cookies } from '#utils/cookies.js';
 
 export const register = async (req, res, next) => {
@@ -14,13 +14,17 @@ export const register = async (req, res, next) => {
         details: formatValidationError(validationResult.error),
       });
     }
-    const { name, email,password,role } = validationResult.data;
+    const { name, email, password, role } = validationResult.data;
 
-    const user = await createUser({ name, email, password,role });
+    const user = await createUser({ name, email, password, role });
 
-    const token = jwtToken.sign({ id: user.id, email:user.email, role:user.role });
+    const token = jwtToken.sign({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
-    cookies.set(res,token, token);
+    cookies.set(res, token, token);
 
     logger.info(`User registered successfully: ${email} with role ${role}`);
 
@@ -28,9 +32,9 @@ export const register = async (req, res, next) => {
       message: 'User registered successfully',
       user: {
         id: user.id,
-        name:user.name,
-        email:user.email,
-        role:user.role,
+        name: user.name,
+        email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -41,8 +45,6 @@ export const register = async (req, res, next) => {
     next(error);
   }
 };
-
-
 
 export const login = async (req, res, next) => {
   try {
@@ -59,7 +61,11 @@ export const login = async (req, res, next) => {
 
     const user = await authenticateUser({ email, password });
 
-    const token = jwtToken.sign({ id: user.id, email: user.email, role: user.role });
+    const token = jwtToken.sign({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     cookies.set(res, 'token', token);
 
