@@ -1,6 +1,9 @@
 import logger from '#config/logger.js';
 import { loginSchema, registerSchema } from '#validations/auth.validation.js';
 import { formatValidationError } from '#utils/format.js';
+import { createUser } from '#services/auth.service.js';
+import {jwtToken} from '#utils/jwt.js';
+import { cookies } from '#utils/cookies.js';
 
 export const register = async (req, res, next) => {
   try {
@@ -11,16 +14,23 @@ export const register = async (req, res, next) => {
         details: formatValidationError(validationResult.error),
       });
     }
-    const { name, email, role } = validationResult.data;
+    const { name, email,password,role } = validationResult.data;
+
+    const user = await createUser({ name, email, password,role });
+
+    const token = jwtToken.sign({ id: user.id, email:user.email, role:user.role });
+
+    cookies.set(res,token, token);
 
     logger.info(`User registered successfully: ${email} with role ${role}`);
+
     res.status(201).json({
       message: 'User registered successfully',
       user: {
-        id: 1,
-        name,
-        email,
-        role,
+        id: user.id,
+        name:user.name,
+        email:user.email,
+        role:user.role,
       },
     });
   } catch (error) {
@@ -32,14 +42,16 @@ export const register = async (req, res, next) => {
   }
 };
 
+
+
 export const login = async (req, res, next) => {
   try {
     const validationResult = loginSchema.safeParse(req.body);
 
-    if (!validationResult.success) {
+    if (!validationResult.success){
       return res.status(401).json({
-        error: 'validation error',
-        details: formatValidationError(validationResult.error),
+        error:'validation error',
+        details: formatValidationError(validationResult.error)
       });
     }
 
