@@ -4,48 +4,88 @@ import { slidingWindow } from '@arcjet/node';
 
 const securityMiddleware = async (req, res, next) => {
   try {
-    const role = req.user ? role || 'guest' : 'guest';
+    const role = req.user?.role || 'guest';
 
     let limit;
-    let message;
 
     switch (role) {
       case 'admin':
         limit = 20;
-        message = 'Admin access - higher limits applied';
         break;
       case 'user':
         limit = 10;
-        message = 'User access - standard limits applied';
         break;
       case 'guest':
         limit = 5;
-        message = 'Guest access - stricter limits applied';
         break;
+      default:
+        limit = 5;
+
     }
-    const client = aj.withRule(slidingWindow({mode: 'LIVE',interval:'1m',max: limit,name: `Rate limit for ${role}`}));
+
+    const client = aj.withRule(
+      slidingWindow({
+        mode: 'LIVE',
+        interval: '1m',
+        max: limit,
+        name: `${role}-rate-limit`,
+      })
+    );
 
     const decision = await client.protect(req);
 
-    if(!decision.allow && decision.reason.isBot()) {
-      logger.warn('Bot detected and blocked', { ip: req.ip, userAgent: req.headers['user-agent'] });
-      return res.status(403).json({ error: 'Access denied', message: 'Bot traffic is not allowed' });
-    }
-    if(!decision.allow && decision.reason.isShield()) {
-      logger.warn('Shield detected and blocked', { ip: req.ip, userAgent: req.headers['user-agent'],method:req.method });
-      return res.status(403).json({ error: 'Access denied', message: 'Shield traffic is not allowed' });
-    }
-    if(!decision.allow && decision.reason.isRateLimit()) {
-      logger.warn('Rate limit exceeded', { ip: req.ip, userAgent: req.headers['user-agent'] });
-      return res.status(429).json({ error: 'Rate limit exceeded', message: 'Too many requests' });
-    }
-    next();
-  } catch (error) {
-    console.error('Arcjet middleware error:', error);
+    if (decision.isDenied() && decision.reason.isBot()) {
+      logger.warn('Bot request blocked', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        path: req.path,
+      });
 
-    return res.status(403).json({ error: 'Access denied' });
-    //next();
+      return res
+        .status(403)
+        .json({
+          error: 'Forbidden',
+          message: 'Automated requests are not allowed',
+        });
+    }
+
+    if (decision.isDenied() && decision.reason.isShield()) {
+      logger.warn('Shield Blocked request', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        path: req.path,
+        method: req.method,
+      });
+
+      return res
+        .status(403)
+        .json({
+          error: 'Forbidden',
+          message: 'Request blocked by security policy',
+        });
+    }
+
+    if (decision.isDenied() && decision.reason.isRateLimit()) {
+      logger.warn('Rate limit exceeded', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        path: req.path,
+      });
+
+      return res
+        .status(403)
+        .json({ error: 'Forbidden', message: 'Too many requests' });
+    }
+
+    next();
+  } catch (e) {
+    console.error('Arcjet middleware error:', e);
+    res
+      .status(500)
+      .json({
+        error: 'Internal server error',
+        message: 'Something went wrong with security middleware',
+      });
   }
 };
-
 export default securityMiddleware;

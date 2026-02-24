@@ -1,0 +1,20 @@
+services:
+  neon-local:
+    image: neondatabase/neon_local:latest
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env.development
+    volumes:
+      - ./.neon_local/:/tmp/.neon_local
+      - ./.git/HEAD:/tmp/.git/HEAD:ro
+
+  app:
+    build: .
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    env_file:
+      - .env.development
+    depends_on:
+      - neon-local
+    restart: on-failure

@@ -1,6 +1,4 @@
-import arcjet, { shield, detectBot,slidingWindow } from '@arcjet/node';
-
-
+import arcjet, { shield, detectBot, slidingWindow } from '@arcjet/node';
 
 const aj = arcjet({
   key: process.env.ARCJET_KEY,
@@ -8,17 +6,13 @@ const aj = arcjet({
     shield({ mode: 'LIVE' }),
     detectBot({
       mode: 'LIVE',
-      allow: [
-        'CATEGORY:SEARCH_ENGINE',
-        //"CATEGORY:MONITOR", // Uptime monitoring services
-        'CATEGORY:PREVIEW',
-      ],
+      allow: ['CATEGORY:SEARCH_ENGINE', 'CATEGORY:PREVIEW'],
     }),
     slidingWindow({
       mode: 'LIVE',
-      interval: '2s', // 60 seconds
-      max: 5, // Allow 10 requests per window
-    })
+      interval: '2s',
+      max: 5,
+    }),
   ],
 });
 
