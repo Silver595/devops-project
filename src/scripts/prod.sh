@@ -3,7 +3,7 @@
 # Production deployment script for Acquisition App
 # This script starts the application in production mode with Neon Cloud Database
 
-echo "🚀 Starting Acquisition App in Production Mode"
+echo "🚀 Starting silver App in Production Mode"
 echo "==============================================="
 
 # Check if .env.production exists

@@ -3,7 +3,7 @@
 # Development startup script for Acquisition App with Neon Local
 # This script starts the application in development mode with Neon Local
 
-echo "🚀 Starting Acquisition App in Development Mode"
+echo "🚀 Starting silver App in Development Mode"
 echo "================================================"
 
 # Check if .env.development exists
